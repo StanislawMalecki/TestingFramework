@@ -17,9 +17,28 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>runner</module>
-        <module>scenarios</module>
+        <module>Scenarios</module>
+        <module>WebDriverRunner</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>4.16.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+        </dependency>
+    </dependencies>
 
 
 </project>
