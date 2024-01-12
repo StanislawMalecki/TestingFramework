@@ -1,11 +1,11 @@
-package org.testing.tests;
+package org.testing.smokeTests;
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testing.WDAbstractUtilitiesForTest;
 
-public class HelloSeleniumTest extends WDAbstractUtilitiesForTest
+public class CanYouLogInTest extends WDAbstractUtilitiesForTest
 {
     public void init() {
 
