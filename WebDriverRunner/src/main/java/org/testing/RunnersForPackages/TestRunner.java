@@ -1,14 +1,12 @@
 package org.testing.RunnersForPackages;
 
 import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.engine.discovery.PackageNameFilter;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-
 public class TestRunner {
     public static void main(String[] args)
     {
@@ -23,8 +21,6 @@ public class TestRunner {
         } else
         {
             System.out.println("Nie wszystkie wymagane zmienne środowiskowe istnieją.");
-
-            return;
         }
 
         if (packageName != null && !packageName.isEmpty())
@@ -43,9 +39,13 @@ public class TestRunner {
             System.out.println("Zmienna środowiskowa testName nie istnieje lub jest pusta.");
         }
 
+        String domain = "org.testing.%s".formatted(packageName).replaceAll("\"", "");
+
         LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder
                 .request()
-                .selectors(DiscoverySelectors.selectPackage("org.testing.%s".formatted(packageName)))
+                .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
+                .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
+                .selectors(DiscoverySelectors.selectPackage(domain))
                 .build();
 
         launcher.registerTestExecutionListeners(listener);
