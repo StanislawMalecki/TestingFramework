@@ -1,5 +1,7 @@
-package org.testing.RunnersForPackages;
+package org.testing.core;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
@@ -7,7 +9,9 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-public class TestRunner {
+public class TestRunner 
+{
+    private static final Logger logger = LogManager.getLogger(TestRunner.class);
     public static void main(String[] args)
     {
         Launcher launcher = LauncherFactory.create();
@@ -17,26 +21,26 @@ public class TestRunner {
 
         if (packageName != null && !packageName.isEmpty() && testName != null && !testName.isEmpty())
         {
-            System.out.println("Obie zmienne środowiskowe packageName i testName istnieją.");
+            logger.info("Obie zmienne środowiskowe packageName i testName istnieją.");
         } else
         {
-            System.out.println("Nie wszystkie wymagane zmienne środowiskowe istnieją.");
+            logger.info("Nie wszystkie wymagane zmienne środowiskowe istnieją.");
         }
 
         if (packageName != null && !packageName.isEmpty())
         {
-            System.out.println("Zmienna środowiskowa packageName istnieje: " + packageName);
+            logger.info("Zmienna środowiskowa packageName istnieje: " + packageName);
         } else
         {
-            System.out.println("Zmienna środowiskowa packageName nie istnieje lub jest pusta.");
+            logger.info("Zmienna środowiskowa packageName nie istnieje lub jest pusta.");
         }
 
         if (testName != null && !testName.isEmpty())
         {
-            System.out.println("Zmienna środowiskowa testName istnieje: " + testName);
+            logger.info("Zmienna środowiskowa testName istnieje: " + testName);
         } else
         {
-            System.out.println("Zmienna środowiskowa testName nie istnieje lub jest pusta.");
+            logger.info("Zmienna środowiskowa testName nie istnieje lub jest pusta.");
         }
 
         String domain = "org.testing.%s".formatted(packageName).replaceAll("\"", "");
@@ -52,15 +56,14 @@ public class TestRunner {
         launcher.execute(discoveryRequest);
 
         TestExecutionSummary summary = listener.getSummary();
-        System.out.printf("Wyniki testów: %n Succeeded tests: %d%n", summary.getTestsSucceededCount());
-        System.out.printf("Failed tests: %d%n", summary.getTestsFailedCount());
+        logger.info("Wyniki testów: %nSucceeded tests: %d%nFailed tests: %d%n".formatted(summary.getTestsSucceededCount(), summary.getTestsFailedCount()));
 
         // Możesz także przetworzyć wyniki w bardziej zaawansowany sposób, jeśli to konieczne
         // np. sprawdzając czy są błędy w wynikach
         if (summary.getFailures().isEmpty()) {
-            System.out.println("Wszystkie testy zakończone sukcesem.");
+            logger.info("Wszystkie testy zakończone sukcesem.");
         } else {
-            System.out.println("Znaleziono błędy w testach.");
+            logger.info("Znaleziono błędy w testach.");
         }
     }
 }

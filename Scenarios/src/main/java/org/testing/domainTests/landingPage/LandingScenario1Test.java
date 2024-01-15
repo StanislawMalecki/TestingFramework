@@ -15,7 +15,7 @@ public class LandingScenario1Test extends WDAbstractUtilitiesForTest
     @Test
     public void caller() {
         WebDriver driver = new ChromeDriver();
-
+        logger.info("going to site");
         driver.get("https://selenium.dev");
 
         driver.quit();
