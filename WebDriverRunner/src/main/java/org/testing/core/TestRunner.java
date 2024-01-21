@@ -2,6 +2,7 @@ package org.testing.core;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.platform.commons.util.StringUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
@@ -10,17 +11,18 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-import org.testing.Utils.MyFilenameFilter;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TestRunner
@@ -80,20 +82,19 @@ public class TestRunner
         launcher.execute(discoveryRequest);
     }
 
-    private static void runSelectedTests(String testName, SummaryGeneratingListener listener)
-    {
+    private static void runSelectedTests(String testName, SummaryGeneratingListener listener) throws IOException {
         List<String> list = processTestVariable(testName);
         Launcher launcher = LauncherFactory.create();
         LauncherDiscoveryRequest discoveryRequest;
 
         if(list == null)
         {
-            String aa = MyFilenameFilter.getFilename(testName + ".java");
+            String path = getPath(testName);
             discoveryRequest = LauncherDiscoveryRequestBuilder
                     .request()
                     .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
                     .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
-                    .selectors(DiscoverySelectors.selectClass("org.testing.domainTests.landingPage." + testName))
+                    .selectors(DiscoverySelectors.selectClass(path))
                     .build();
         }
         else
@@ -122,4 +123,33 @@ public class TestRunner
         return null;
     }
 
+    public static List<Path> listFilesUsingFileWalk(String dir, String testName, int depth) throws IOException
+    {
+        try (Stream<Path> stream = Files.walk(Paths.get(dir), depth))
+        {
+            return stream
+                    .filter(file -> !Files.isDirectory(file))
+                    .filter(file -> file.getFileName().toString().equals(testName+".java"))
+                    .collect(Collectors.toList());
+        }
+    }
+    public static String preparePath(String input)
+    {
+        int index = input.indexOf("org\\testing");
+        String cropped = input.substring(index);
+        cropped = cropped.replace(".java", "");
+        return cropped.replaceAll("\\\\", ".");
+    }
+
+    public static String getPath(String testName) throws IOException
+    {
+        List<Path> aa = listFilesUsingFileWalk(System.getProperty("user.dir"), testName, 10);
+
+        if(aa.size() > 1)
+        {
+            throw new InvalidParameterException("There is %d objects with name %s. Listing: ".formatted(aa.size(), testName)+ aa);
+        }
+
+        return preparePath(aa.get(0).toString());
+    }
 }
