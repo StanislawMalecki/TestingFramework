@@ -24,10 +24,9 @@ import java.util.stream.Stream;
 public class TestRunner
 {
     private static final Logger logger = LogManager.getLogger(TestRunner.class);
-
+    private static final SummaryGeneratingListener listener = new SummaryGeneratingListener();
     public static void main(String[] args) throws IOException
     {
-        SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
         String testName = System.getenv("testName");
         String packageName = System.getenv("packageName");
@@ -35,16 +34,19 @@ public class TestRunner
 
         if (packageName != null && !packageName.isEmpty() && testName != null && !testName.isEmpty())
         {
-            runPackageTests(domain, listener);
-            runSelectedTests(testName, listener);
+            runPackageTests(domain);
+            //TODO
+            TestExecutionSummary summary = listener.getSummary();
+            logger.info("Test results: %nSucceeded tests: %d%nFailed tests: %d%n".formatted(summary.getTestsSucceededCount(), summary.getTestsFailedCount()));
+            runSelectedTests(testName);
         }
         else if (packageName != null && !packageName.isEmpty())
         {
-            runPackageTests(domain, listener);
+            runPackageTests(domain);
         }
         else if (testName != null && !testName.isEmpty())
         {
-            runSelectedTests(testName, listener);
+            runSelectedTests(testName);
         }
         else
         {
@@ -64,7 +66,7 @@ public class TestRunner
         }
     }
 
-    private static void runPackageTests(String packageName, SummaryGeneratingListener listener)
+    private static void runPackageTests(String packageName)
     {
         Launcher launcher = LauncherFactory.create();
 
@@ -79,7 +81,7 @@ public class TestRunner
         launcher.execute(discoveryRequest);
     }
 
-    private static void runSelectedTests(String testName, SummaryGeneratingListener listener) throws IOException {
+    private static void runSelectedTests(String testName) throws IOException {
         List<String> list = processTestVariable(testName);
         Launcher launcher = LauncherFactory.create();
         LauncherDiscoveryRequest discoveryRequest;
