@@ -28,21 +28,23 @@ import java.util.stream.Stream;
 public class TestRunner
 {
     private static final Logger logger = LogManager.getLogger(TestRunner.class);
-    private static String domain;
-    public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws IOException
+    {
         SummaryGeneratingListener listener = new SummaryGeneratingListener();
-        String packageName = System.getenv("packageName");
+
         String testName = System.getenv("testName");
-        domain = "org.testing.%s".formatted(packageName).replaceAll("\"", "");
+        String packageName = System.getenv("packageName");
+        String domain = "org.testing.%s".formatted(packageName).replaceAll("\"", "");
 
         if (packageName != null && !packageName.isEmpty() && testName != null && !testName.isEmpty())
         {
-            runPackageTests(packageName, listener);
+            runPackageTests(domain, listener);
             runSelectedTests(testName, listener);
         }
         else if (packageName != null && !packageName.isEmpty())
         {
-            runPackageTests(packageName, listener);
+            runPackageTests(domain, listener);
         }
         else if (testName != null && !testName.isEmpty())
         {
@@ -70,12 +72,11 @@ public class TestRunner
     {
         Launcher launcher = LauncherFactory.create();
 
-
         LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder
                 .request()
                 .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
                 .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
-                .selectors(DiscoverySelectors.selectPackage(domain))
+                .selectors(DiscoverySelectors.selectPackage(packageName))
                 .build();
 
         launcher.registerTestExecutionListeners(listener);
@@ -104,6 +105,13 @@ public class TestRunner
                     .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
                     .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
                     .selectors(list.stream()
+                            .map(test -> {
+                                try {
+                                    return getPath(test);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
                             .map(DiscoverySelectors::selectClass)
                             .toArray(DiscoverySelector[]::new))
                     .build();
