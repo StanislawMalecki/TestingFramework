@@ -15,7 +15,7 @@ This is a project I've made to present my skills as a QA engineer.
 - Run multiple test, separate them by coma *testName=LandingScenario1Test,LandingScenario2Test*
 - You can also run both, separate variables with semicolon *packageName=domainTests.landingPage;testName=CanYouLogInTest,WorkflowScenario1Test*
 # Test structure 
-This section should be represented in place like Xray repository.
+This section should be represented in place like Xray repository. For now tests are just examples.
 
 - org.testing
 	- domainTests
