@@ -1,5 +1,7 @@
 package org.testing.domainTests.landingPage;
 
+import org.apache.logging.log4j.core.util.Assert;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -19,6 +21,9 @@ public class LandingScenario2Test extends WDAbstractUtilitiesForTest
         driver.get("https://selenium.dev");
 
         driver.quit();
+        SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.fail("massageeee");
+        softAssertions.assertAll();
     }
 
     public void cleanUp() {

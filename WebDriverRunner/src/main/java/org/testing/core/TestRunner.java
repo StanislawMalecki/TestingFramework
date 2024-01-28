@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,22 +28,26 @@ public class TestRunner
     private static final SummaryGeneratingListener listener = new SummaryGeneratingListener();
     public static void main(String[] args) throws IOException
     {
-
         String testName = System.getenv("testName");
         String packageName = System.getenv("packageName");
-        String domain = "org.testing.%s".formatted(packageName).replaceAll("\"", "");
+        List<TestExecutionSummary.Failure> getFailures2 = null;
 
         if (packageName != null && !packageName.isEmpty() && testName != null && !testName.isEmpty())
         {
-            runPackageTests(domain);
-            //TODO
-            TestExecutionSummary summary = listener.getSummary();
-            logger.info("Test results: %nSucceeded tests: %d%nFailed tests: %d%n".formatted(summary.getTestsSucceededCount(), summary.getTestsFailedCount()));
+            runPackageTests(packageName);
+
+            TestExecutionSummary summary2 = listener.getSummary();
+            long succeededTests = summary2.getTestsSucceededCount();
+            long failedTests = summary2.getTestsFailedCount();
+            getFailures2 = summary2.getFailures();
+
             runSelectedTests(testName);
+
+            logger.info("Test results: %nSucceeded tests: %d%nFailed tests: %d%n".formatted(succeededTests, failedTests));
         }
         else if (packageName != null && !packageName.isEmpty())
         {
-            runPackageTests(domain);
+            runPackageTests(packageName);
         }
         else if (testName != null && !testName.isEmpty())
         {
@@ -54,28 +59,46 @@ public class TestRunner
         }
 
         TestExecutionSummary summary = listener.getSummary();
+
         logger.info("Test results: %nSucceeded tests: %d%nFailed tests: %d%n".formatted(summary.getTestsSucceededCount(), summary.getTestsFailedCount()));
 
-        if (summary.getFailures().isEmpty())
+        printStacks(summary.getFailures());
+
+        if(getFailures2 != null)
         {
-            logger.info("Wszystkie testy zakończone sukcesem.");
-        }
-        else
-        {
-            logger.info("Znaleziono błędy w testach.");
+            printStacks(getFailures2);
         }
     }
 
     private static void runPackageTests(String packageName)
     {
+        List<String> list = processTestPackageVariable(packageName);
         Launcher launcher = LauncherFactory.create();
+        LauncherDiscoveryRequest discoveryRequest;
 
-        LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder
-                .request()
-                .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
-                .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
-                .selectors(DiscoverySelectors.selectPackage(packageName))
-                .build();
+        if(list == null)
+        {
+            packageName = "org.testing.%s".formatted(packageName).replaceAll("\"", "");
+
+            discoveryRequest = LauncherDiscoveryRequestBuilder
+                    .request()
+                    .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
+                    .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
+                    .selectors(DiscoverySelectors.selectPackage(packageName))
+                    .build();
+        }
+        else
+        {
+
+            discoveryRequest = LauncherDiscoveryRequestBuilder
+                    .request()
+                    .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
+                    .configurationParameter("junit.jupiter.execution.parallel.config.dynamic.factor", "10")
+                    .selectors(list.stream()
+                            .map(DiscoverySelectors::selectPackage)
+                            .toArray(DiscoverySelector[]::new))
+                    .build();
+        }
 
         launcher.registerTestExecutionListeners(listener);
         launcher.execute(discoveryRequest);
@@ -129,6 +152,18 @@ public class TestRunner
         return null;
     }
 
+    private static List<String> processTestPackageVariable(String testPackage)
+    {
+        if(testPackage.contains(","))
+        {
+            return Arrays.stream(testPackage.split(","))
+                    .map(element -> "org.testing." + element)
+                    .collect(Collectors.toList());
+        }
+
+        return null;
+    }
+
     public static List<Path> listFilesUsingFileWalk(String dir, String testName, int depth) throws IOException
     {
         try (Stream<Path> stream = Files.walk(Paths.get(dir), depth))
@@ -155,7 +190,22 @@ public class TestRunner
         {
             throw new InvalidParameterException("There is %d objects with name %s. Listing: ".formatted(aa.size(), testName)+ aa);
         }
+        if(aa.isEmpty())
+        {
+            throw new InvalidParameterException("There are no objects with this name:%s".formatted(testName));
+        }
 
         return preparePath(aa.get(0).toString());
+    }
+
+    private static void printStacks(List<TestExecutionSummary.Failure> failures)
+    {
+        for (TestExecutionSummary.Failure failure : failures)
+        {
+            for (StackTraceElement elm : failure.getException().getStackTrace())
+            {
+                System.err.println(elm);
+            }
+        }
     }
 }
